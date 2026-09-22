@@ -26,6 +26,31 @@ export interface SystemPromptResponse {
   default_prompt: string;
 }
 
+export interface PdfTopic {
+  name: string;
+  subtopics: string[];
+}
+
+export interface PdfHierarchyNode {
+  name: string;
+  children: PdfHierarchyNode[];
+}
+
+export interface PdfMindMapResponse {
+  source_pdf: string;
+  page_number: number;
+  paragraph_number: number;
+  extracted_text: string;
+  cleaned_text: string;
+  topics: {
+    topics: PdfTopic[];
+  };
+  hierarchy: PdfHierarchyNode;
+  mermaid: string;
+  html: string;
+  processing_time_ms: number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface HeaderProps {}
 

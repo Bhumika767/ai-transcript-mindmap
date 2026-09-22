@@ -8,6 +8,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { TranscriptionResults } from './components/TranscriptionResults';
 import { ErrorMessage } from './components/ErrorMessage';
 import { Footer } from './components/Footer';
+import { PdfMindMapPanel } from './components/PdfMindMapPanel';
 
 interface TranscriptionResponse {
   success: boolean;
@@ -362,6 +363,7 @@ function App() {
             setIsOriginalExpanded(!isOriginalExpanded)
           }
         />
+        <PdfMindMapPanel />
         <Footer />
       </div>
     </div>

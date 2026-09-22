@@ -1,225 +1,404 @@
 # AI Transcript App
 
-A base for your portfolio piece to land your next AI engineering job.
-AI-powered voice transcription with Whisper and LLM cleaning. Browser-based recording interface with FastAPI backend.
+This project provides two local workflows:
 
-**📺 Recommended Video Tutorial:** For project structure and API details, watch the full tutorial on YouTube: https://youtu.be/WUo5tKg2lnE
+1. Browser-based voice transcription and transcript cleanup.
+2. PDF paragraph processing into topics, a hierarchy, Mermaid mind-map text, and an HTML visualization.
 
----
+The original voice workflow remains independent from the PDF mind-map workflow.
 
-## Branches
+## System Overview
 
-This repository uses checkpoint branches to progressively teach AI engineering concepts:
+### Voice Workflow
 
-| Branch | Description | Builds On | Learning Resource |
-|--------|-------------|-----------|-------------------|
-| `main` | Complete transcript app with Whisper + LLM cleaning (runs fully locally, beginner friendly) | — | [YouTube Tutorial](https://youtu.be/WUo5tKg2lnE) |
-| `checkpoint-1-fundamentals` | Exercise generation system for learning Python/TypeScript fundamentals | — | [Classroom](https://aiengineer.community/join) |
-| `checkpoint-agentic-openrouter` | Agentic workflow with autonomous tool selection | `main` | [Classroom](https://aiengineer.community/join) |
-| `checkpoint-pydanticai-openrouter` | PydanticAI framework for structured agent development | `checkpoint-agentic-openrouter` | [Classroom](https://aiengineer.community/join) |
-| `checkpoint-rest-mcp-openrouter` | MCP integration with REST API and GitHub Issues | `checkpoint-pydanticai-openrouter` | [Classroom](https://aiengineer.community/join) |
+```text
+Audio
+  ↓
+Faster-Whisper
+  ↓
+Raw Transcript
+  ↓
+Ollama / Gemma 3 4B
+  ↓
+Cleaned Transcript
+```
 
-> **Why "openrouter" in branch names?** These branches use [OpenRouter](https://openrouter.ai/) to access powerful cloud models that reliably support tool/function calling. Small local models struggle with agentic workflows.
+### PDF Mind-Map Workflow
 
-Switch branches with: `git checkout <branch-name>`
+```text
+PDF
+  ↓
+Paragraph Extraction
+  ↓
+Transcript Cleaning
+  ↓
+Topic / Subtopic Extraction
+  ↓
+Hierarchy Construction
+  ↓
+Mermaid Mind-Map
+  ↓
+HTML Visualization
+```
 
----
+The LLM is used for language-dependent tasks such as transcript cleaning and topic extraction. Deterministic Python code handles PDF selection, validation, hierarchy construction, Mermaid generation, HTML escaping, and pipeline orchestration.
 
-**Features:**
+## Project Structure
 
-- 🎤 Browser-based voice recording
-- 🔊 English Whisper speech-to-text (runs locally)
-- 🤖 LLM cleaning (removes filler words, fixes errors)
-- 🔌 **OpenAI API-compatible** (works with Ollama, LM Studio, OpenAI, or any OpenAI-compatible API)
-- 📋 One-click copy to clipboard
+```text
+local-ai-transcript-app/
+│
+├── backend/
+│   ├── app.py
+│   ├── transcription.py
+│   ├── pdf_extraction.py
+│   ├── pdf_cleaning.py
+│   ├── topic_extraction.py
+│   ├── hierarchy.py
+│   ├── mind_map.py
+│   ├── html_renderer.py
+│   ├── pdf_mindmap_pipeline.py
+│   ├── logging_config.py
+│   ├── system_prompt.txt
+│   └── tests/
+│
+├── frontend/
+│   └── src/
+│
+├── ARCHITECTURE.md
+├── DIAGRAMS.md
+├── CHANGELOG.md
+├── LOGS.md
+└── README.md
+```
 
-Note that the vanilla version uses a smaller language model running on your CPU.
-This means the AI may not listen to system prompts that well depending on the transcript.
-The challenge for you is to change this portfolio app to advance the solution and make it your own.
+## Prerequisites
 
-For example:
+For native Windows development, install:
 
-- Modify it for a specific industry
-- Add GPU acceleration + stronger local LLM
-- Use a cloud AI model
-- Real-time transcription/LLM streaming
-- Multi-language support beyond English
+- Python 3.13 or newer
+- Node.js and npm
+- Ollama
+- Git
 
-**📚 Need help and want to learn more?**
+Docker and the Dev Container configuration are not required for the native Windows workflow.
 
-Full courses on AI Engineering are available at [https://aiengineer.community/join](https://aiengineer.community/join)
+The project uses a Python virtual environment for the backend.
 
----
+## Backend Configuration
 
-## Quick Start
+Create `backend/.env` from `backend/.env.example`.
 
-### 🚀 Dev Container (Recommended)
+For native Windows with Ollama, use:
 
-**This project is devcontainer-first. The easiest way to get started:**
+```text
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_API_KEY=ollama
+LLM_MODEL=gemma3:4b
+WHISPER_MODEL=base.en
+```
 
-#### 1. Prerequisites
+Start Ollama and make sure the model is available:
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [VS Code](https://code.visualstudio.com/)
-- [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+```powershell
+ollama pull gemma3:4b
+```
 
-#### 2. Open in Dev Container
+## Running the Backend
 
-- Click **"Reopen in Container"** in VS Code
-- Or: `Cmd/Ctrl+Shift+P` → **"Dev Containers: Reopen in Container"**
-- Wait ~5-10 minutes for initial build and model download
+From the repository root:
 
-VS Code automatically:
-
-1. Builds and starts both containers (app + Ollama)
-2. Installs Python and Node.js dependencies
-3. Downloads the Ollama model
-4. Creates `backend/.env` with working defaults
-
-Skip to [Running the App](#running-the-app).
-
----
-
-### ☁️ GitHub Codespaces (No Powerful PC Required)
-
-**Don't have a powerful PC?** GitHub Codespaces provides cloud-based development environments that work with this project's devcontainer.
-
-#### 1. Create a Codespace
-
-- Go to the [repository on GitHub](https://github.com/AI-Engineer-Skool/local-ai-transcript-app)
-- Click the green **"Code"** button → **"Codespaces"** tab → **"Create codespace on main"**
-- The devcontainer enforces at least **4-core**, but if you can select more cores and RAM please do so.
-- Wait ~5-10 minutes for initial setup
-
-#### 2. Access the App
-
-The devcontainer automatically configures everything. Once ready:
-
-- Ports are auto-forwarded (you'll see notifications for ports 3000, 8000, 11434)
-- Click the port 3000 link or go to the **"Ports"** tab to access the frontend
-
-#### 3. For Localhost-Dependent Code
-
-If you need true `localhost` access (some code expects `localhost:8000`):
-
-1. Install the [GitHub Codespaces extension](https://marketplace.visualstudio.com/items?itemName=GitHub.codespaces) in VS Code Desktop
-2. Connect to your running Codespace from VS Code Desktop
-3. Ports will forward to your actual `localhost`
-
-> **💡 Tip:** Stop your Codespace when not in use to conserve free hours. Go to [github.com/codespaces](https://github.com/codespaces) to manage active instances.
-
-> **📺 Video Guide:** Watch the [GitHub Codespaces setup tutorial](https://youtu.be/KkV1O-rXntM) for a walkthrough.
-
-> **🔄 Other Platforms:** Any cloud platform supporting devcontainers (Gitpod, DevPod, etc.) can also be used with this repository's `.devcontainer` configuration.
-
----
-
-### 🛠️ Manual Installation
-
-The devcontainer is the easiest supported setup method for beginners.
-If you choose to install manually, you'll need:
-
-- Python 3.12+, Node.js 24+, [uv](https://docs.astral.sh/uv/), and an LLM server ([Ollama](https://ollama.com/) or [LM Studio](https://lmstudio.ai/))
-- Copy `backend/.env.example` to `backend/.env` and configure
-- Install dependencies with `uv sync` (backend) and `npm install` (frontend)
-- Start your LLM server and pull models: `ollama pull llama3.1:8b`
-
-**For detailed setup, use the devcontainer above.**
-
----
-
-## Running the App
-
-Open **two terminals** and run:
-
-**Terminal 1 - Backend:**
-
-```bash
+```powershell
 cd backend
-uv sync && uv run uvicorn app:app --reload --host 0.0.0.0 --port 8000 --timeout-keep-alive 600
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
-> **Note:** `uv sync` ensures dependencies are up-to-date (useful after switching branches).`--timeout-keep-alive 600` sets a 10-minute timeout for long audio processing.
+The backend will be available at:
 
-**Terminal 2 - Frontend:**
+```text
+http://127.0.0.1:8000
+```
 
-```bash
+## Running the Frontend
+
+Open a second terminal:
+
+```powershell
 cd frontend
-npm install && npm run dev
+npm ci
+npm run dev
 ```
 
-> **Note:** `npm install` ensures dependencies are up-to-date (useful after switching branches).
+Open the local URL displayed by Vite in the terminal.
 
-**Browser:** Open `http://localhost:3000`
+The frontend communicates with the FastAPI backend through the configured `/api` proxy.
 
----
+## Voice Transcription
 
-## Configuration
+The original application supports microphone recording and audio-file upload.
 
-### OpenAI API Compatibility
+The voice workflow is:
 
-**This app is compatible with any OpenAI API-format LLM provider:**
+```text
+Audio Input
+    ↓
+POST /api/transcribe
+    ↓
+Temporary Audio File
+    ↓
+Faster-Whisper base.en
+    ↓
+Raw Transcript
+    ↓
+POST /api/clean
+    ↓
+Ollama / Gemma 3 4B
+    ↓
+Cleaned Transcript
+```
 
-- **Ollama** (default - works out of the box in devcontainer)
-- **LM Studio** (local alternative)
-- **OpenAI API** (cloud-based)
-- Any other OpenAI-compatible API
+Existing API endpoints:
 
-The devcontainer automatically creates `backend/.env` with working Ollama defaults. **No configuration needed to get started.**
+- `GET /api/status`
+- `GET /api/system-prompt`
+- `POST /api/transcribe`
+- `POST /api/clean`
 
-To use a different provider, edit `backend/.env`:
+The original voice functionality remains independent from the PDF mind-map workflow.
 
-- `LLM_BASE_URL` - API endpoint
-- `LLM_API_KEY` - API key
-- `LLM_MODEL` - Model name
+## PDF Mind-Map Feature
 
----
+The extended application provides:
 
-## Troubleshooting
+```text
+PDF
+ ↓
+Body Paragraph Extraction
+ ↓
+LLM Cleaning
+ ↓
+Topic / Subtopic Extraction
+ ↓
+Hierarchy Construction
+ ↓
+Mermaid Generation
+ ↓
+HTML Rendering
+```
 
-**Container won't start or is very slow:**
+The API endpoint is:
 
-⚠️ **This app runs an LLM on CPU and requires adequate Docker resources.**
+```text
+POST /api/pdf-mindmap
+```
 
-Configure Docker Desktop resources:
+It accepts multipart form data:
 
-1. Open **Docker Desktop** → **Settings** → **Resources**
-2. Set **CPUs** to maximum available (8+ cores recommended)
-3. Set **Memory** to at least 16GB
-4. Click **Apply & Restart**
+| Field              | Description                   |
+| ------------------ | ----------------------------- |
+| `file`             | PDF file                      |
+| `page_number`      | 1-based page number           |
+| `paragraph_number` | 1-based body-paragraph number |
 
-**Expected specs:** Modern laptop/desktop with 8+ CPU cores and 16GB RAM. More CPU = faster LLM responses.
+### Example API Request
 
-**Microphone not working:**
+From the repository root, after starting the backend:
 
-- Use Chrome or Firefox (Safari may have issues)
-- Check browser permissions: Settings → Privacy → Microphone
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/pdf-mindmap" `
+  -F "file=@why-llm-cant-develop-software.pdf" `
+  -F "page_number=1" `
+  -F "paragraph_number=1"
+```
 
-**Backend fails to start:**
+The API returns:
 
-- Check Whisper model downloads: `~/.cache/huggingface/`
-- Ensure enough disk space (models are ~150MB)
+- original PDF filename
+- page number
+- paragraph number
+- extracted text
+- cleaned transcript
+- topics and subtopics
+- hierarchy
+- Mermaid mind-map definition
+- generated HTML
+- processing time
 
-**LLM errors:**
+### Example Output
 
-- Make sure Ollama service is running (it auto-starts with devcontainer)
-- Check model is downloaded: Model downloads automatically during devcontainer setup
-- Transcription still works without LLM (raw Whisper only)
+A simplified response has the following structure:
 
-**LLM is slow:**
+```json
+{
+  "source_pdf": "why-llm-cant-develop-software.pdf",
+  "page_number": 1,
+  "paragraph_number": 1,
+  "extracted_text": "One of the things I have spent a lot of time doing is interviewing software engineers.",
+  "cleaned_text": "One of the things I have spent a lot of time doing is interviewing software engineers.",
+  "topics": {
+    "topics": [
+      {
+        "name": "Software Engineering Interviews",
+        "subtopics": []
+      }
+    ]
+  },
+  "hierarchy": {
+    "name": "Topics",
+    "children": [
+      {
+        "name": "Software Engineering Interviews",
+        "children": []
+      }
+    ]
+  },
+  "mermaid": "mindmap\n  root((Topics))\n    Software Engineering Interviews",
+  "html": "...",
+  "processing_time_ms": 6061.75
+}
+```
 
-- See "Container won't start or is very slow" section above for Docker resource configuration
-- **Fallback option:** Switch to another model (edit `LLM_MODEL` in `backend/.env`)
-  - ⚠️ **Trade-off:** 3b is faster but **significantly worse at cleaning transcripts**
-- **Best alternative:** Use a cloud API like OpenAI for instant responses with excellent quality (edit `.env`)
+## Visual Mind Map
 
-**Cannot access localhost:3000 or localhost:8000 from host machine:**
+The backend generates both Mermaid mind-map text and an HTML document.
 
-- **Docker Desktop:** Go to **Settings** → **Resources** → **Network**
-- Enable **"Use host networking"** (may require Docker Desktop restart)
-- Restart the frontend and backend servers
+The generated HTML can be opened in a browser to display the visual mind map.
 
-**Port already in use:**
+The HTML renderer currently loads Mermaid from the external jsDelivr CDN. Therefore, internet access is required when opening the generated HTML visualization.
 
-- Backend: Change port with `--port 8001`
-- Frontend: Edit `vite.config.js`, change `port: 3000`
+## Frontend PDF Workflow
+
+The React frontend provides a PDF mind-map panel where the user can:
+
+1. Select a PDF.
+2. Enter the page number.
+3. Enter the paragraph number.
+4. Submit the PDF for processing.
+5. View the extracted paragraph.
+6. View the cleaned transcript.
+7. View extracted topics and subtopics.
+8. View the processing time.
+9. View the generated visual mind map.
+
+The existing voice-transcription interface remains available.
+
+## Architecture and Diagrams
+
+Detailed architecture documentation is available in:
+
+- `ARCHITECTURE.md` — system architecture, runtime behavior, module responsibilities, LLM boundary, API boundary, logging, and deterministic/LLM stages.
+- `DIAGRAMS.md` — Mermaid architecture, DFD, data-flow, component, and sequence diagrams.
+
+The diagrams document both the original voice workflow and the extended PDF-to-mind-map workflow.
+
+## Logging and Observability
+
+The PDF pipeline uses the dedicated logger:
+
+```text
+ai_transcript.pdf_pipeline
+```
+
+The logging captures information including:
+
+- PDF source
+- page and paragraph
+- extracted text length
+- cleaning input/output lengths
+- processing durations
+- topic and subtopic counts
+- Mermaid output size
+- HTML output size
+- pipeline errors
+- peak Python memory allocation measured with `tracemalloc`
+
+Token usage is currently logged as unavailable because the existing LLM client method returns the generated text without exposing response usage metadata.
+
+The memory value reported by `tracemalloc` represents Python allocation tracking, not total operating-system process memory.
+
+See `LOGS.md` for logging examples and observations.
+
+## Testing
+
+The backend contains unit, integration, pipeline, API, logging, and regression tests.
+
+From the `backend` directory:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+The current verified result is:
+
+```text
+52 passed, 1 warning
+```
+
+The warning is an existing dependency deprecation warning related to `ctranslate2` importing the deprecated `pkg_resources` API. It is not an application test failure.
+
+## Development Approach
+
+The implementation separates LLM-based interpretation from deterministic processing.
+
+### LLM-Based Stages
+
+- PDF paragraph cleaning
+- Topic and subtopic extraction
+
+### Deterministic Stages
+
+- PDF paragraph selection
+- Text normalization
+- Pydantic validation
+- Hierarchy construction
+- Mermaid generation
+- HTML escaping
+- Temporary-file cleanup
+- Pipeline orchestration
+
+This separation makes the structural and formatting stages predictable and testable while using the LLM where language understanding is required.
+
+## Documentation
+
+The repository contains the following supporting documentation:
+
+| File              | Purpose                                                                |
+| ----------------- | ---------------------------------------------------------------------- |
+| `README.md`       | Setup, usage, API, testing, and feature overview                       |
+| `ARCHITECTURE.md` | Technical architecture and runtime behavior                            |
+| `DIAGRAMS.md`     | Mermaid architecture, DFD, component, data-flow, and sequence diagrams |
+| `CHANGELOG.md`    | Implementation stages and major changes                                |
+| `LOGS.md`         | Logging and observability information                                  |
+
+## Current Limitations
+
+- The PDF API currently accepts an uploaded PDF together with page and paragraph numbers rather than a filesystem path.
+- The generated HTML visualization loads Mermaid from jsDelivr, so the visualization requires network access when opened.
+- Token usage is not currently available from the existing LLM response handling.
+- The current PDF workflow processes one selected paragraph per API request.
+
+## Verification
+
+The extended workflow has been manually verified end-to-end:
+
+```text
+PDF Upload
+    ↓
+Page / Paragraph Selection
+    ↓
+PDF Extraction
+    ↓
+LLM Cleaning
+    ↓
+Topic / Subtopic Extraction
+    ↓
+Hierarchy Construction
+    ↓
+Mermaid Generation
+    ↓
+HTML Rendering
+    ↓
+React Frontend Visualization
+```
+
+The backend test suite has also been verified with 52 passing tests.
