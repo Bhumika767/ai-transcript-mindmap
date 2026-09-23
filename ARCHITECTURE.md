@@ -14,183 +14,118 @@ graph TD
     end
 
     %% =========================
-    %% API Layer
+    %% Backend Layer
     %% =========================
-    subgraph API["API Layer"]
+    subgraph Backend["Backend Layer"]
         FastAPI["🚀 FastAPI Backend
-        backend/app.py
-        HTTP Routes
+        HTTP API
         Validation
         CORS
-        Lifespan"]
-    end
-
-    %% =========================
-    %% Application Layer
-    %% =========================
-    subgraph Application["Application / Processing Layer"]
+        Request Handling"]
 
         Voice["🎙️ Voice Workflow
-        /api/transcribe
-        /api/clean"]
+        Audio → Transcript"]
 
-        Pipeline["🔄 PDF Mind-Map Pipeline
-        pdf_mindmap_pipeline.py
-        Orchestration"]
-
-        Extraction["📄 PDF Extraction
-        pdf_extraction.py
-        Page + Paragraph Selection"]
-
-        Cleaning["🧹 PDF Cleaning
-        pdf_cleaning.py
-        Text Normalization"]
-
-        Topics["🧠 Topic & Subtopic Extraction
-        topic_extraction.py
-        Structured JSON"]
-
-        Hierarchy["🌳 Hierarchy Builder
-        hierarchy.py
-        HierarchyNode"]
-
-        Mermaid["🗺️ Mermaid Generator
-        mind_map.py
-        Mermaid mindmap syntax"]
-
-        HTML["🖥️ HTML Renderer
-        html_renderer.py
-        Visual HTML output"]
+        PDF["📄 PDF Mind-Map Workflow
+        PDF → Mind Map"]
     end
 
     %% =========================
-    %% AI / ML Layer
+    %% AI Layer
     %% =========================
     subgraph AI["AI / ML Layer"]
-
         Whisper["🎙️ Faster-Whisper
-        Speech-to-Text
-        Raw English Transcript"]
+        Speech-to-Text"]
 
-        Ollama["🤖 Ollama
-        Gemma 3 4B
-        OpenAI-Compatible API"]
-
-        Service["⚙️ TranscriptionService
-        transcription.py
-        LLM Client Boundary"]
+        Ollama["🤖 Ollama / Gemma 3 4B
+        Transcript Cleaning
+        Topic Extraction"]
     end
 
     %% =========================
-    %% Temporary / Output Resources
+    %% Processing Layer
     %% =========================
-    subgraph Resources["Files & Outputs"]
+    subgraph Processing["Processing Layer"]
 
-        AudioTemp["📁 Temporary Audio File
-        Uploaded audio during processing"]
+        Transcript["📝 Transcript Processing
+        Cleaning
+        Topic / Subtopic Extraction"]
 
-        PDFTemp["📁 Temporary PDF File
-        Uploaded PDF during processing"]
+        Structure["🌳 Structure Generation
+        Hierarchy Construction
+        Mermaid Mind Map"]
 
-        Result["📊 PdfMindMapResult
-        Extracted Text
-        Cleaned Text
-        Topics
-        Hierarchy
-        Mermaid
-        HTML"]
-
-        Visual["🖼️ Visual Mind Map
-        Mermaid / HTML"]
+        Render["🖥️ Visualization
+        HTML Rendering"]
     end
 
     %% =========================
-    %% Observability
+    %% Output Layer
     %% =========================
-    subgraph Observability["Logging & Observability"]
+    subgraph Output["Output"]
 
-        Logger["📋 ai_transcript.pdf_pipeline
-        Dedicated Pipeline Logger"]
+        CleanTranscript["✨ Cleaned Transcript"]
 
-        Metrics["📈 Stage Metadata
-        Durations
-        Text Lengths
-        Topic Counts
-        Output Sizes
-        Errors
-        Peak Python Allocation"]
+        TopicData["📦 Topics & Subtopics"]
+
+        MindMap["🧠 Visual Mind Map"]
+
     end
 
     %% =========================
-    %% Client → API
+    %% Main Flow
     %% =========================
 
-    Browser -->|Audio / PDF requests| FastAPI
-
-    %% =========================
-    %% Voice Workflow
-    %% =========================
+    Browser -->|Audio / PDF Upload| FastAPI
 
     FastAPI --> Voice
-    Voice --> AudioTemp
-    AudioTemp --> Whisper
-    Whisper -->|Raw Transcript| Voice
-    Voice --> Service
-    Service --> Ollama
-    Ollama -->|Cleaned Transcript| Voice
-    Voice -->|Transcript Result| FastAPI
-    FastAPI --> Browser
+    FastAPI --> PDF
+
+    %% Voice workflow
+    Voice --> Whisper
+    Whisper -->|Raw Transcript| Transcript
+
+    %% PDF workflow
+    PDF -->|Selected Paragraph| Transcript
+
+    %% AI processing
+    Transcript --> Ollama
+    Ollama -->|Cleaned Text| Transcript
+
+    Transcript -->|Cleaned Transcript| CleanTranscript
+    Transcript -->|Topic Request| Ollama
+    Ollama -->|Topics + Subtopics| TopicData
+
+    %% Structure and visualization
+    TopicData --> Structure
+    Structure --> Render
+    Render --> MindMap
+
+    %% Output
+    CleanTranscript --> Browser
+    TopicData --> Browser
+    MindMap --> Browser
+
 
     %% =========================
-    %% PDF Workflow
+    %% Clean Yellow Styling
     %% =========================
 
-    FastAPI -->|PDF + Page + Paragraph| PDFTemp
-    PDFTemp --> Pipeline
+    style Client fill:#fff9c4,stroke:#c9b458,stroke-width:2px
+    style Backend fill:#fff9c4,stroke:#c9b458,stroke-width:2px
+    style AI fill:#fff9c4,stroke:#c9b458,stroke-width:2px
+    style Processing fill:#fff9c4,stroke:#c9b458,stroke-width:2px
+    style Output fill:#fff9c4,stroke:#c9b458,stroke-width:2px
 
-    Pipeline --> Extraction
-    Extraction -->|Selected Paragraph| Cleaning
-
-    Cleaning -->|Cleaning Request| Service
-    Service --> Ollama
-    Ollama -->|Cleaned Paragraph| Cleaning
-
-    Cleaning -->|Cleaned Transcript| Topics
-
-    Topics -->|Topic Extraction Request| Service
-    Service --> Ollama
-    Ollama -->|Topics + Subtopics JSON| Topics
-
-    Topics -->|Validated Topic Data| Hierarchy
-    Hierarchy -->|HierarchyNode Tree| Mermaid
-    Mermaid -->|Mermaid Definition| HTML
-    HTML -->|HTML Visualization| Result
-
-    Pipeline --> Result
-    Result --> FastAPI
-    FastAPI -->|JSON Response| Browser
-    HTML --> Visual
-    Visual --> Browser
-
-    %% =========================
-    %% Logging Connections
-    %% =========================
-
-    Pipeline -.->|Pipeline events| Logger
-    Extraction -.->|Extraction metadata| Logger
-    Cleaning -.->|Cleaning metadata| Logger
-    Topics -.->|Topic metadata| Logger
-    Hierarchy -.->|Hierarchy metadata| Logger
-    Mermaid -.->|Output size| Logger
-    HTML -.->|HTML size| Logger
-
-    Logger --> Metrics
-
-    %% =========================
-    %% Service Relationships
-    %% =========================
-
-    FastAPI -->|Creates once at startup| Service
-    Service --> Whisper
-    Service --> Ollama
-```
+    style Browser fill:#fffde7,stroke:#8d7b32
+    style FastAPI fill:#fffde7,stroke:#8d7b32
+    style Voice fill:#fffde7,stroke:#8d7b32
+    style PDF fill:#fffde7,stroke:#8d7b32
+    style Whisper fill:#fffde7,stroke:#8d7b32
+    style Ollama fill:#fffde7,stroke:#8d7b32
+    style Transcript fill:#fffde7,stroke:#8d7b32
+    style Structure fill:#fffde7,stroke:#8d7b32
+    style Render fill:#fffde7,stroke:#8d7b32
+    style CleanTranscript fill:#fffde7,stroke:#8d7b32
+    style TopicData fill:#fffde7,stroke:#8d7b32
+    style MindMap fill:#fffde7,stroke:#8d7b32
