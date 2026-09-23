@@ -1,9 +1,5 @@
 # Diagrams
 
-These diagrams describe the main workflows, data flow, system components, and runtime interactions of the AI Transcript Application.
-
----
-
 ## 1. Existing Voice Transcription Flow
 
 This diagram shows the original voice-transcription workflow that existed in the project before the PDF mind-map extension.
@@ -11,27 +7,30 @@ This diagram shows the original voice-transcription workflow that existed in the
 ```mermaid
 flowchart LR
 
-    User["User<br/>Upload / Record Audio"]
+    Browser["🌐 React Browser UI"]
 
-    API["FastAPI<br/>/api/transcribe"]
+    API["🚀 FastAPI<br/>/api/transcribe"]
 
-    Whisper["Faster-Whisper<br/>Speech-to-Text"]
+    Temp["📁 Temporary<br/>Audio File"]
 
-    Raw["Raw Transcript"]
+    Whisper["🎙️ Faster-Whisper<br/>base.en"]
 
-    Clean["Ollama / Gemma 3 4B<br/>Transcript Cleaning"]
+    Raw["📝 Raw<br/>Transcript"]
 
-    Output["Cleaned Transcript<br/>Returned to User"]
+    CleanAPI["🧹 FastAPI<br/>/api/clean"]
 
-    User --> API
-    API --> Whisper
+    Service["⚙️ TranscriptionService"]
+
+    LLM["🤖 Ollama<br/>Gemma 3 4B"]
+
+    Cleaned["✨ Cleaned<br/>Transcript"]
+
+    Browser -->|Audio upload / recording| API
+    API --> Temp
+    Temp --> Whisper
     Whisper --> Raw
-    Raw --> Clean
-    Clean --> Output
-
-    style User fill:#f3f0ff,stroke:#8b7cc8
-    style API fill:#f3f0ff,stroke:#8b7cc8
-    style Whisper fill:#f3f0ff,stroke:#8b7cc8
-    style Raw fill:#f3f0ff,stroke:#8b7cc8
-    style Clean fill:#f3f0ff,stroke:#8b7cc8
-    style Output fill:#f3f0ff,stroke:#8b7cc8
+    Raw --> CleanAPI
+    CleanAPI --> Service
+    Service --> LLM
+    LLM --> Cleaned
+    Cleaned --> Browser
