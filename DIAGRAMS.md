@@ -5,34 +5,31 @@
 This diagram shows the original voice-transcription workflow that existed in the project before the PDF mind-map extension.
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    Browser["🌐 React Browser UI"]
+    Browser["React Browser UI"]
 
-    API["🚀 FastAPI<br/>/api/transcribe"]
+    API["FastAPI /api/transcribe"]
 
-    Temp["📁 Temporary<br/>Audio File"]
+    Whisper["Faster-Whisper<br/>base.en"]
 
-    Whisper["🎙️ Faster-Whisper<br/>base.en"]
+    Raw["Raw Transcript"]
 
-    Raw["📝 Raw<br/>Transcript"]
+    CleanAPI["FastAPI /api/clean"]
 
-    CleanAPI["🧹 FastAPI<br/>/api/clean"]
+    Service["TranscriptionService"]
 
-    Service["⚙️ TranscriptionService"]
+    LLM["Ollama / Gemma 3 4B"]
 
-    LLM["🤖 Ollama<br/>Gemma 3 4B"]
+    Cleaned["Cleaned Transcript"]
 
-    Cleaned["✨ Cleaned<br/>Transcript"]
-
-    Browser -->|Audio upload / recording| API
-    API --> Temp
-    Temp --> Whisper
-    Whisper --> Raw
+    Browser -->|Audio upload| API
+    API -->|Audio file| Whisper
+    Whisper -->|Transcribes audio| Raw
     Raw --> CleanAPI
     CleanAPI --> Service
     Service --> LLM
-    LLM --> Cleaned
+    LLM -->|Cleans transcript| Cleaned
     Cleaned --> Browser
 ```
 
@@ -43,51 +40,51 @@ flowchart LR
 This diagram shows how a selected PDF paragraph moves through extraction, cleaning, topic extraction, hierarchy construction, Mermaid generation, and HTML rendering.
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    PDF["📑 Uploaded PDF"]
+    PDF["Uploaded PDF"]
 
-    Selection["📌 Page + Paragraph<br/>Selection"]
+    Selection["Page + Paragraph Selection"]
 
-    Extract["📄 pdf_extraction.py<br/>Extract selected body paragraph"]
+    Extract["PDF Extraction<br/>pdf_extraction.py"]
 
-    Paragraph["📝 Extracted<br/>Paragraph"]
+    Paragraph["Extracted Paragraph"]
 
-    Clean["🧹 pdf_cleaning.py<br/>Clean and normalize text"]
+    Clean["PDF Cleaning<br/>pdf_cleaning.py"]
 
-    LLM1["🤖 Ollama / Gemma 3 4B"]
+    LLM["Ollama / Gemma 3 4B"]
 
-    Transcript["✨ Cleaned<br/>Transcript"]
+    Transcript["Cleaned Transcript"]
 
-    Topics["🧠 topic_extraction.py<br/>Extract topics and subtopics"]
+    Topics["Topic Extraction<br/>topic_extraction.py"]
 
-    TopicJSON["📦 Validated<br/>Topic JSON"]
+    TopicJSON["Topic + Subtopic JSON"]
 
-    Hierarchy["🌳 hierarchy.py<br/>Build recursive hierarchy"]
+    Hierarchy["Hierarchy Builder<br/>hierarchy.py"]
 
-    Tree["🌲 HierarchyNode<br/>Tree"]
+    Tree["HierarchyNode Tree"]
 
-    Mermaid["🗺️ mind_map.py<br/>Generate Mermaid mindmap"]
+    Mermaid["Mermaid Generator<br/>mind_map.py"]
 
-    Definition["📋 Mermaid<br/>Definition"]
+    Definition["Mermaid Definition"]
 
-    HTML["🖥️ html_renderer.py<br/>Generate HTML"]
+    HTML["HTML Renderer<br/>html_renderer.py"]
 
-    Visual["🎨 Visual<br/>Mind Map"]
+    Visual["Visual Mind Map"]
 
     PDF --> Selection
     Selection --> Extract
     Extract --> Paragraph
     Paragraph --> Clean
 
-    Clean -->|Cleaning request| LLM1
-    LLM1 -->|Cleaned text| Clean
+    Clean -->|Cleaning request| LLM
+    LLM -->|Cleaned text| Clean
 
     Clean --> Transcript
     Transcript --> Topics
 
-    Topics -->|Topic extraction request| LLM1
-    LLM1 -->|Topics + subtopics JSON| Topics
+    Topics -->|Topic extraction request| LLM
+    LLM -->|Structured topics| Topics
 
     Topics --> TopicJSON
     TopicJSON --> Hierarchy
@@ -102,143 +99,101 @@ flowchart LR
 
 ## 3. Data Flow Diagram (DFD)
 
-This DFD shows how data moves through the extended application from user input to transcript and mind-map outputs.
+This DFD shows the main movement of data through the application from user input to the final outputs.
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    User["👤 User"]
+    User["User"]
 
-    subgraph Input["Input"]
-        Audio["🎙️ Audio Input"]
-        PDF["📑 PDF Input"]
-        Selection["📌 Page + Paragraph<br/>Selection"]
-    end
+    Input["Audio / PDF Input"]
 
-    subgraph Processing["Processing"]
-        VoiceProcess["1. Voice Transcription"]
-        PDFExtract["2. PDF Paragraph Extraction"]
-        Clean["3. Transcript Cleaning"]
-        Topics["4. Topic / Subtopic Extraction"]
-        Hierarchy["5. Hierarchy Construction"]
-        MindMap["6. Mind-Map Generation"]
-        HTML["7. HTML Rendering"]
-    end
+    Selection["Page + Paragraph Selection"]
 
-    subgraph AI["AI Services"]
-        Whisper["🎙️ Faster-Whisper"]
-        Ollama["🤖 Ollama / Gemma 3 4B"]
-    end
+    Application["AI Transcript Application"]
 
-    subgraph Data["Data / Outputs"]
-        RawTranscript["📝 Raw Transcript"]
-        CleanTranscript["✨ Cleaned Transcript"]
-        TopicData["📦 Topic / Subtopic JSON"]
-        HierarchyData["🌳 Hierarchy Tree"]
-        MermaidData["🗺️ Mermaid Definition"]
-        VisualMap["🎨 Visual Mind Map"]
-    end
+    Voice["Voice Transcription"]
 
-    User --> Audio
-    User --> PDF
-    User --> Selection
+    PDF["PDF Paragraph Extraction"]
 
-    Audio --> VoiceProcess
-    VoiceProcess --> Whisper
-    Whisper --> RawTranscript
-    RawTranscript --> Clean
+    Cleaning["Transcript Cleaning"]
 
-    PDF --> PDFExtract
-    Selection --> PDFExtract
-    PDFExtract --> Clean
+    Topics["Topic + Subtopic Extraction"]
 
-    Clean --> Ollama
-    Ollama --> CleanTranscript
+    Hierarchy["Hierarchy Construction"]
 
-    CleanTranscript --> Topics
-    Topics --> Ollama
-    Ollama --> TopicData
+    MindMap["Mind-Map Generation"]
 
-    TopicData --> Hierarchy
-    Hierarchy --> HierarchyData
+    Output["Transcript / JSON / Visual Mind Map"]
 
-    HierarchyData --> MindMap
-    MindMap --> MermaidData
+    User --> Input
+    Input --> Application
+    Application --> Voice
+    Application --> PDF
 
-    MermaidData --> HTML
-    HTML --> VisualMap
+    PDF --> Selection
+    Voice --> Cleaning
+    Selection --> Cleaning
 
-    CleanTranscript --> User
-    VisualMap --> User
+    Cleaning --> Topics
+    Topics --> Hierarchy
+    Hierarchy --> MindMap
+
+    Cleaning --> Output
+    Topics --> Output
+    MindMap --> Output
+
+    Output --> User
 ```
 
 ---
 
 ## 4. Component Architecture
 
-This diagram shows the main backend modules and their relationships.
+This diagram shows the main components of the application and how they interact.
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    subgraph Client["Client Layer"]
-        Browser["🌐 React Frontend<br/>User Interface"]
-    end
+    Frontend["React Frontend"]
 
-    subgraph API["API Layer"]
-        App["🚀 FastAPI<br/>backend/app.py"]
-    end
+    API["FastAPI Backend<br/>backend/app.py"]
 
-    subgraph Application["Application Layer"]
-        Pipeline["🔄 PDF Mind-Map Pipeline<br/>pdf_mindmap_pipeline.py"]
+    Pipeline["PDF Mind-Map Pipeline<br/>pdf_mindmap_pipeline.py"]
 
-        Extraction["📄 PDF Extraction<br/>pdf_extraction.py"]
+    Extraction["PDF Extraction<br/>pdf_extraction.py"]
 
-        Cleaning["🧹 PDF Cleaning<br/>pdf_cleaning.py"]
+    Cleaning["PDF Cleaning<br/>pdf_cleaning.py"]
 
-        Topics["🧠 Topic Extraction<br/>topic_extraction.py"]
+    Topics["Topic Extraction<br/>topic_extraction.py"]
 
-        Hierarchy["🌳 Hierarchy Construction<br/>hierarchy.py"]
+    Hierarchy["Hierarchy Builder<br/>hierarchy.py"]
 
-        MindMap["🗺️ Mermaid Generation<br/>mind_map.py"]
+    MindMap["Mermaid Generator<br/>mind_map.py"]
 
-        Renderer["🖥️ HTML Rendering<br/>html_renderer.py"]
-    end
+    Renderer["HTML Renderer<br/>html_renderer.py"]
 
-    subgraph ServiceLayer["Service / AI Layer"]
-        Service["⚙️ TranscriptionService<br/>transcription.py"]
+    Service["TranscriptionService<br/>transcription.py"]
 
-        Whisper["🎙️ Faster-Whisper<br/>Speech-to-Text"]
+    AI["Ollama / Gemma 3 4B"]
 
-        Ollama["🤖 Ollama<br/>Gemma 3 4B"]
-    end
+    Logs["Pipeline Logging<br/>logging_config.py"]
 
-    subgraph Observability["Observability"]
-        Logs["📋 logging_config.py<br/>ai_transcript.pdf_pipeline"]
-    end
-
-    Browser -->|HTTP requests| App
-
-    App -->|PDF request| Pipeline
-    App -->|Creates / uses service| Service
+    Frontend --> API
+    API --> Pipeline
 
     Pipeline --> Extraction
-    Pipeline --> Cleaning
-    Pipeline --> Topics
-    Pipeline --> Hierarchy
-    Pipeline --> MindMap
-    Pipeline --> Renderer
+    Extraction --> Cleaning
+    Cleaning --> Topics
+    Topics --> Hierarchy
+    Hierarchy --> MindMap
+    MindMap --> Renderer
 
-    Cleaning -->|uses clean_with_llm()| Service
-    Topics -->|uses LLM boundary| Service
+    Cleaning --> Service
+    Topics --> Service
+    Service --> AI
 
-    Service --> Whisper
-    Service --> Ollama
-
-    Pipeline -.->|logging| Logs
-    Extraction -.->|logging| Logs
-    Cleaning -.->|logging| Logs
-    Topics -.->|logging| Logs
+    Pipeline -.-> Logs
 ```
 
 ---
@@ -250,111 +205,110 @@ This sequence diagram shows the runtime interaction when the user uploads a PDF 
 ```mermaid
 sequenceDiagram
 
-    participant Client as React Browser
-    participant API as FastAPI app.py
+    participant User as React Browser
+    participant API as FastAPI
     participant Pipeline as PDF Pipeline
     participant Extract as PDF Extraction
     participant Service as TranscriptionService
-    participant LLM as Ollama / Gemma
-    participant Hierarchy as Hierarchy Builder
-    participant Mermaid as Mermaid Generator
+    participant LLM as Ollama
+    participant Build as Hierarchy + Mind Map
     participant HTML as HTML Renderer
 
-    Client->>API: Upload PDF + page + paragraph
+    User->>API: Upload PDF + page + paragraph
 
-    API->>API: Validate request
-    API->>API: Save PDF to temporary file
+    API->>Pipeline: Process PDF
 
-    API->>Pipeline: process_pdf_to_mind_map()
-
-    Pipeline->>Extract: extract_paragraph()
-    Extract-->>Pipeline: Extracted paragraph
+    Pipeline->>Extract: Extract paragraph
+    Extract-->>Pipeline: Paragraph
 
     Pipeline->>Service: Clean paragraph
     Service->>LLM: Cleaning request
     LLM-->>Service: Cleaned paragraph
     Service-->>Pipeline: Cleaned transcript
 
-    Pipeline->>Service: Extract topics/subtopics
+    Pipeline->>Service: Extract topics
     Service->>LLM: Topic extraction request
-    LLM-->>Service: Structured topic JSON
+    LLM-->>Service: Topic JSON
     Service-->>Pipeline: Validated topics
 
-    Pipeline->>Hierarchy: build_hierarchy()
-    Hierarchy-->>Pipeline: HierarchyNode tree
+    Pipeline->>Build: Build hierarchy
+    Build-->>Pipeline: Mind-map structure
 
-    Pipeline->>Mermaid: generate_mermaid_mindmap()
-    Mermaid-->>Pipeline: Mermaid definition
-
-    Pipeline->>HTML: render_mermaid_html()
+    Pipeline->>HTML: Render Mermaid HTML
     HTML-->>Pipeline: HTML visualization
 
     Pipeline-->>API: PdfMindMapResult
-
-    API->>API: Restore original filename
-    API->>API: Delete temporary PDF
-
-    API-->>Client: JSON + Mermaid + HTML
+    API-->>User: JSON + Mermaid + HTML
 ```
 
 ---
 
 ## 6. High-Level System Data Flow
 
-The following diagram summarizes the complete extended system from user input to transcript and mind-map outputs.
+This diagram summarizes the complete system from user input to the final transcript and mind-map outputs.
 
 ```mermaid
-flowchart LR
+flowchart TD
 
-    User["👤 User"]
+    User["User"]
 
-    subgraph Client["Client Layer"]
-        Frontend["🌐 React Frontend"]
-    end
+    Frontend["React Frontend"]
 
-    subgraph API["API Layer"]
-        Backend["🚀 FastAPI Backend"]
-    end
+    Backend["FastAPI Backend"]
 
-    subgraph Application["Application / Processing Layer"]
-        Voice["🎙️ Voice Workflow"]
-        PDFPipeline["📑 PDF Mind-Map Pipeline"]
-        Processing["⚙️ Processing Modules<br/>Extraction • Cleaning • Topics • Hierarchy"]
-        Visualization["🗺️ Mermaid + HTML"]
-    end
+    Voice["Voice Workflow"]
 
-    subgraph AI["AI / ML Layer"]
-        Whisper["🎙️ Faster-Whisper"]
-        Ollama["🤖 Ollama / Gemma 3 4B"]
-    end
+    PDF["PDF Mind-Map Workflow"]
 
-    subgraph Output["Output Layer"]
-        Transcript["📝 Cleaned Transcript"]
-        JSON["📦 Structured Topic JSON"]
-        MindMap["🎨 Visual Mind Map"]
-    end
+    AI["AI Services<br/>Faster-Whisper + Ollama"]
+
+    Processing["Processing<br/>Cleaning + Topics + Hierarchy"]
+
+    Visualization["Visualization<br/>Mermaid + HTML"]
+
+    Results["Results<br/>Transcript + JSON + Mind Map"]
 
     User --> Frontend
     Frontend --> Backend
 
     Backend --> Voice
-    Backend --> PDFPipeline
+    Backend --> PDF
 
-    Voice --> Whisper
-    Whisper --> Transcript
+    Voice --> AI
+    PDF --> Processing
 
-    Voice --> Ollama
-    Ollama --> Transcript
-
-    PDFPipeline --> Processing
-    Processing --> Ollama
-    Ollama --> Processing
+    Processing --> AI
+    AI --> Processing
 
     Processing --> Visualization
-    Visualization --> MindMap
-    Processing --> JSON
+    Visualization --> Results
 
-    Transcript --> Frontend
-    JSON --> Frontend
-    MindMap --> Frontend
+    Voice --> Results
+
+    Results --> Frontend
+    Frontend --> User
 ```
+
+---
+
+## Diagram Overview
+
+The six diagrams describe the system at different levels:
+
+1. **Existing Voice Transcription Flow**  
+   Shows the original audio transcription workflow.
+
+2. **PDF-to-Mind-Map Data Flow**  
+   Shows the detailed processing of a selected PDF paragraph.
+
+3. **Data Flow Diagram (DFD)**  
+   Shows the overall movement of data through the application.
+
+4. **Component Architecture**  
+   Shows the main software components and their relationships.
+
+5. **POST `/api/pdf-mindmap` Sequence**  
+   Shows the runtime interaction between the frontend, backend, pipeline, LLM, and output components.
+
+6. **High-Level System Data Flow**  
+   Shows the complete system at a simplified architectural level.
